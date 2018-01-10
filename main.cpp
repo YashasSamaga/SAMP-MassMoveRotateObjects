@@ -1,91 +1,87 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-/*****************************************************************************************/
-#define VALUE_PRECISION 10
-#define VALUE_FILL 10
-/*****************************************************************************************/
-int main()
-{
-	std::ifstream inputFile;
-	std::ofstream outputFile;
+#include <limits>
 
-	long double X, Y, Z, rX, rY, rZ;
+const int value_precision = 10;
+const int value_width = 10;
 
-	std::cout << std::setprecision(VALUE_PRECISION) << std::setw(VALUE_FILL);
-	std::cin >> std::setprecision(VALUE_PRECISION);
-
-	std::cout << "Enter the correction factor X: ";
-	std::cin >> X;
-	std::cout << "Enter the correction factor Y: ";
-	std::cin >> Y;
-	std::cout << "Enter the correction factor Z: ";
-	std::cin >> Z;
-	std::cout << "Enter the correction factor rX: ";
-	std::cin >> rX;
-	std::cout << "Enter the correction factor rY: ";
-	std::cin >> rY;
-	std::cout << "Enter the correction factor rZ: ";
-	std::cin >> rZ;
-	std::cout << "Correction Terms: " << X << " " << Y << " " << Z << " "<< rX << " " << rY << " " << rZ << std::endl << std::endl;
-
-	inputFile.open("input.pwn");
-	outputFile.open("output.pwn");
-
-	if (!inputFile) std::cout << "Failed to open \"input.pwn\"."<<std::endl;
-	if (!outputFile) std::cout << "Failed to create \"output.pwn\"." << std::endl;
+struct Object {
+	typedef long double float_t;
+	int modelid;
+	std::string func;
+	float_t X, Y, Z;
+	float_t rX, rY, rZ;	
+};
+std::istream &operator >> (std::istream &is, Object &obj) {
+	std::getline(is, obj.func, '('); obj.func += '(';
 	
-	if (inputFile && outputFile)
-	{
-		char text[64];
-		long double value;
+	is >> obj.modelid;
+	is.ignore(1, ',');
 
-		outputFile << std::setprecision(VALUE_PRECISION) << std::setw(VALUE_FILL);
-		inputFile >> std::setprecision(VALUE_PRECISION);
+	is >> obj.X;
+	is.ignore(1, ',');
 
-		while (!inputFile.eof())
-		{
-			inputFile >> text; 
-			if (text[0] == '\0' || (text[0] == '\r' && text[1] == '\0')) break;
+	is >> obj.Y;
+	is.ignore(1, ',');
 
-			std::cout << text;
-			outputFile << text; //CreateObject(modelid,			
+	is >> obj.Z;
+	is.ignore(1, ',');
 
-			inputFile >> value;
-			inputFile.ignore(1, ',');
-			std::cout << (value + X) << ", ";
-			outputFile << (value + X) << ", "; //x
+	is >> obj.rX;
+	is.ignore(1, ',');
 
-			inputFile >> value;
-			inputFile.ignore(1, ',');
-			std::cout << (value + Y) << ", ";
-			outputFile << (value + Y) << ", "; //y
+	is >> obj.rY;
+	is.ignore(1, ',');
 
-			inputFile >> value;
-			inputFile.ignore(1, ',');
-			std::cout << (value + Z) << ", ";
-			outputFile << (value + Z) << ", "; //z
-
-			inputFile >> value;
-			inputFile.ignore(1, ',');
-			std::cout << (value + rX) << ", ";
-			outputFile << (value + rX) << ", "; //rx
-
-			inputFile >> value;
-			inputFile.ignore(1, ',');
-			std::cout << (value + rY) << ", ";
-			outputFile << (value + rY) << ", "; //ry
-
-			inputFile >> value;
-			inputFile.ignore(1, ')');
-			inputFile.ignore(1, ';');
-			std::cout << (value + rZ) << ");" << std::endl;
-			outputFile << (value + rZ) << ");" <<std::endl; //rz
-		}
-	}
-
-	std::cout << "Press any key to close the program.";
-	std::cin.ignore();
-	return 0;
+	is >> obj.rZ;
+	is.ignore(1, ')');
+	is.ignore(1, ';');
+	return is;
+}
+std::ostream &operator << (std::ostream &is, Object &obj) {
+	is << obj.func << obj.modelid << ", ";
+	is << obj.X << ", " << obj.Y << ", " << obj.Z << ", ";
+	is << obj.rX << ", " << obj.rY << ", " << obj.rZ << ");" << '\n';
+	return is;
 }
 
+int main() {
+	std::cin >> std::setprecision(value_precision);
+
+	long double cX, cY, cZ, crX, crY, crZ;
+	std::cout << "Enter the position correction factor (X, Y, Z): ";
+	std::cin >> cX >> cY >> cZ;
+	std::cout << "Enter the rotation correction factor (rX, rY, rZ): ";
+	std::cin >> crX >> crY >> crZ;
+
+	std::ifstream inputFile("input.pwn");
+	if (!inputFile) {
+		std::cout << "Failed to open \"input.pwn\".";
+		return  0;
+	}
+
+	std::ofstream outputFile("output.pwn");
+	if (!outputFile) {
+		std::cout << "Failed to create \"output.pwn\".";
+		return 0;
+	}
+
+	std::cout << std::setprecision(value_precision) << std::setw(value_width);
+	outputFile << std::setprecision(value_precision) << std::setw(value_width);
+	inputFile >> std::setprecision(value_precision);
+
+	Object obj;
+	while(inputFile >> obj) {
+		obj.X += cX;
+		obj.Y += cY;
+		obj.Z += cZ;
+		obj.rX += crX;
+		obj.rY += crY;
+		obj.rZ += crZ;
+
+		std::cout << obj;
+		outputFile << obj;
+	}
+	return 0;
+}
