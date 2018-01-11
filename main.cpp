@@ -10,10 +10,11 @@ struct Object {
 	typedef long double float_t;
 	int modelid;
 	std::string func;
+	std::string extra;
 	float_t X, Y, Z;
 	float_t rX, rY, rZ;	
 };
-std::istream &operator >> (std::istream &is, Object &obj) {
+std::istream &operator >> (std::istream &is, Object &obj) {	
 	std::getline(is, obj.func, '('); obj.func += '(';
 	
 	is >> obj.modelid;
@@ -35,14 +36,16 @@ std::istream &operator >> (std::istream &is, Object &obj) {
 	is.ignore(1, ',');
 
 	is >> obj.rZ;
-	is.ignore(1, ')');
+
+	std::getline(is, obj.extra, ')');
 	is.ignore(1, ';');
+	is.ignore(1, '\n');
 	return is;
 }
 std::ostream &operator << (std::ostream &is, Object &obj) {
 	is << obj.func << obj.modelid << ", ";
 	is << obj.X << ", " << obj.Y << ", " << obj.Z << ", ";
-	is << obj.rX << ", " << obj.rY << ", " << obj.rZ << ");" << '\n';
+	is << obj.rX << ", " << obj.rY << ", " << obj.rZ << obj.extra << ");";
 	return is;
 }
 
@@ -80,8 +83,9 @@ int main() {
 		obj.rY += crY;
 		obj.rZ += crZ;
 
-		std::cout << obj;
-		outputFile << obj;
+		std::cout << obj << '\n';
+		outputFile << obj << '\n';
 	}
 	return 0;
 }
+
